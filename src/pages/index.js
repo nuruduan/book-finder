@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
+// Like component
 function Like({ title, onDelete }) {
   const [likes, setLikes] = useState(0);
 
@@ -16,17 +17,28 @@ function Like({ title, onDelete }) {
 
 // defines a react component called Home
 export default function Home() {
+
   // useState is a hook that let components have state variables(remember values between function calls)
-
-  const [name, setName] = useState(""); // start empty string
+  const [name, setName] = useState(""); 
   const [books, setBooks] = useState([
-    { title: "Atomic Habits", likes: 0 },
-    { title: "The Pragmatic Programmer", likes: 0 },
-    { title: "Clean Code", likes: 0 },
-    { title: "Ayam", likes: 0 }
-  ]);
-  const [newBook, setNewBook] = useState(""); // for new book input
+    "Atomic Habits",
+    "The Pragmatic Programmer",
+    "Clean Code",
+    "Ayam"
+  ]); 
+  const [newBook, setNewBook] = useState("");
+  const [search, setSearch] = useState(""); // search filter
+  const [sortOrder, setSortOrder] = useState("az"); // sort A-Z or Z-A
+  const [loading, setLoading] = useState(true); // skeleton state
 
+  // Simulate loading effect (2 seconds)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+ 
   const addBook = () => {
     if (newBook.trim() === "") return; // prevent adding empty book titles
     setBooks([...books, newBook]); // add new book to books array
@@ -36,6 +48,30 @@ export default function Home() {
   // Delete book by index
   const deleteBook = (index) => {
     setBooks(books.filter((_, i) => i !== index));
+  };
+
+  // Apply search filter
+  const filteredBooks = books.filter((book) =>
+    book.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Apply sort order
+  const sortedBooks = [...filteredBooks].sort((a, b) => {
+    if (sortOrder === "az") return a.localeCompare(b);
+    if (sortOrder === "za") return b.localeCompare(a);
+    return 0;
+  });
+
+  // Reset everything
+  const resetApp = () => {
+    setName("");
+    setBooks([
+      { title: "Atomic Habits", likes: 0 },
+      { title: "The Pragmatic Programmer", likes: 0 },
+      { title: "Clean Code", likes: 0 },
+      { title: "Ayam", likes: 0 },
+    ]);
+    localStorage.clear();
   };
 
   return (
@@ -67,20 +103,64 @@ export default function Home() {
           />
           <button onClick={addBook}>➕ Add Book</button>
           
+          <br/>
+          <br/>
+          
+          {/* Search input */}
+          <input
+            type="text"
+            placeholder="🔍 Search books"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ marginLeft: "10px" }}
+          />
+
+          {/* Sort buttons */}
+          <button onClick={() => setSortOrder("az")} style={{ marginLeft: "10px" }}>
+            ⬆️ Sort A–Z
+          </button>
+          <button onClick={() => setSortOrder("za")} style={{ marginLeft: "5px" }}>
+            ⬇️ Sort Z–A
+          </button>
+
           <ul style={{ padding: "20px" }}>
-            {/*
-            books = state variable (array of book titles)
-            .map = loop through each book in the array, create a <li> for each book
-            key={index} = unique key for each list item (index is the position in the array)
-            */}
-            
-              {books.map((book, index) => (
-                <Like key={index} title={book.title} likes={book.likes} onDelete={() => deleteBook(index)} /> // pass title and onDelete function as props
-       
-              ))}
-            
+
+              {loading ? (
+              // Skeleton loader (show placeholders while loading)
+              <>
+                <li style={{ background: "#ddd", height: "20px", marginBottom: "10px" }}></li>
+                <li style={{ background: "#ddd", height: "20px", marginBottom: "10px" }}></li>
+                <li style={{ background: "#ddd", height: "20px", marginBottom: "10px" }}></li>
+              </>
+            ) : (
+
+              /*
+              books = state variable (array of book titles)
+              .map = loop through each book in the array, create a <li> for each book
+              key={index} = unique key for each list item (index is the position in the array)
+              */
+
+                sortedBooks.map((book, index) => (
+                  
+                  <Like
+                  key={index}
+                  title={book}
+                  likes={book.likes} 
+                  onLike={() => likeBook(index)} 
+                  onDelete={() => deleteBook(index)} /> // pass title and onDelete function as props
+              ))
+            )}  
           </ul>
-        </div>
+
+          {/* Reset button */}
+          <button
+            onClick={resetApp}
+            style={{ marginLeft: "10px", color: "white" }}
+          >
+            🔄 Reset App
+          </button>
+
+      </div>
     </div>
 
     
