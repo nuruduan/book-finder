@@ -10,16 +10,24 @@ export default function Home() {
   const [sortOrder, setSortOrder] = useState("az");
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [darkMode, setDarkMode] = useState(true); // default dark
+  
+
+  // Dark mode toggle
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
 
   // Load from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedBooks = localStorage.getItem("books");
-      if (savedBooks) {
-        setBooks(JSON.parse(savedBooks));
-      } else {
-        setBooks([]);
-      }
+      if (savedBooks) setBooks(JSON.parse(savedBooks));
+      else setBooks([]);
       setTimeout(() => setLoading(false), 800);
     }
   }, []);
@@ -36,11 +44,13 @@ export default function Home() {
     if (newBook.trim() === "" || newCategory.trim() === "") return;
     setBooks([
       ...books,
-      { 
-        id: crypto.randomUUID(), // unique id
-        title: newBook, 
+      {
+        id: crypto.randomUUID(),
+        title: newBook,
         category: newCategory || "Uncategorized",
-        likes: 0 }, 
+        likes: 0,
+        liked: false,
+      },
     ]);
     setNewBook("");
     setNewCategory("");
@@ -49,7 +59,13 @@ export default function Home() {
   const likeBook = (id) => {
     setBooks((prev) =>
       prev.map((book) =>
-        book.id === id ? { ...book, likes: !book.likes, likes: book.likes ? book.likes - 1 : book.likes + 1 } : book
+        book.id === id
+          ? {
+              ...book,
+              likes: book.liked ? book.likes - 1 : book.likes + 1,
+              liked: !book.liked,
+            }
+          : book
       )
     );
   };
@@ -68,13 +84,12 @@ export default function Home() {
 
   const resetAll = () => {
     setBooks([]);
-    localStorage.removeItem("books"); // clears storage
+    localStorage.removeItem("books");
   };
 
   const filteredBooks = books
     .filter((book) => book.title.toLowerCase().includes(search.toLowerCase()))
-    .filter((book) => !categoryFilter || book.category === categoryFilter)
-  ;
+    .filter((book) => !categoryFilter || book.category === categoryFilter);
 
   const sortedBooks = [...filteredBooks].sort((a, b) => {
     if (sortOrder === "az") return a.title.localeCompare(b.title);
@@ -84,8 +99,16 @@ export default function Home() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-center text-gray-200">
+    <div className="max-w-2xl mx-auto p-6 space-y-6 bg-white dark:bg-gray-900 min-h-screen relative">
+      {/* Dark mode toggle */}
+      <button
+        onClick={() => setDarkMode(!darkMode)}
+        className="absolute top-4 right-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg"
+      >
+        {darkMode ? "☀️ Light" : "🌙 Dark"}
+      </button>
+
+      <h1 className="text-3xl font-bold text-center text-gray-800 dark:text-gray-200">
         📚 Book List
       </h1>
 
@@ -96,14 +119,14 @@ export default function Home() {
           value={newBook}
           onChange={(e) => setNewBook(e.target.value)}
           placeholder="Book title..."
-          className="flex-1 border rounded-lg p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 border rounded-lg p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-gray-200"
         />
         <input
           type="text"
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
           placeholder="Category..."
-          className="border rounded-lg p-2 w-32"
+          className="border rounded-lg p-2 w-32 dark:bg-gray-800 dark:text-gray-200"
         />
         <button
           onClick={addBook}
@@ -113,57 +136,56 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Search + Sort */}
+      {/* Search + Sort + Filter */}
       <div className="flex gap-2">
-
-        {/* Search */}
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search..."
-          className="flex-1 border rounded-lg p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="flex-1 border rounded-lg p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:text-gray-200"
         />
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value)}
-          className="border rounded-lg p-2 shadow-sm"
+          className="border rounded-lg p-2 shadow-sm dark:bg-gray-800 dark:text-gray-200"
         >
           <option value="az">A → Z</option>
           <option value="za">Z → A</option>
           <option value="likes">Most Liked</option>
         </select>
-
-        {/* Category Filter */}
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="border rounded-lg p-2 shadow-sm"
+          className="border rounded-lg p-2 shadow-sm dark:bg-gray-800 dark:text-gray-200"
         >
           <option value="">All Categories</option>
-          {Array.from(new Set(books.map((book) => book.category))).map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
+          {Array.from(new Set(books.map((book) => book.category))).map(
+            (cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            )
+          )}
         </select>
-
         {process.env.NODE_ENV === "development" && (
-        <button
-          onClick={resetAll}
-          className="bg-red-500 text-white px-3 py-1 rounded"
-        >
-          Reset All
-        </button>
-      )}
+          <button
+            onClick={resetAll}
+            className="bg-red-500 text-white px-3 py-1 rounded"
+          >
+            Reset All
+          </button>
+        )}
       </div>
 
-      {/* List */}
+      {/* Book List */}
       <ul className="space-y-3">
         {loading ? (
           [...Array(books.length || 1)].map((_, i) => <Skeleton key={i} />)
-          ) : filteredBooks.length === 0 ? ( // show when no result
-            <p className="text-center text-gray-400">No books found 📭</p>
+        ) : filteredBooks.length === 0 ? (
+          <p className="text-center text-gray-400 dark:text-gray-500">
+            No books found 📭
+          </p>
         ) : (
           sortedBooks.map((item) => (
             <Titles
@@ -171,6 +193,7 @@ export default function Home() {
               title={item.title}
               category={item.category}
               likes={item.likes}
+              liked={item.liked}
               onLike={() => likeBook(item.id)}
               onDelete={() => deleteBook(item.id)}
               onEdit={(newTitle) => editBook(item.id, newTitle)}
