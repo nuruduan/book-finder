@@ -5,9 +5,11 @@ import Skeleton from "../components/Skeleton";
 export default function Home() {
   const [books, setBooks] = useState([]);
   const [newBook, setNewBook] = useState("");
+  const [newCategory, setNewCategory] = useState("");
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState("az");
   const [loading, setLoading] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState("");
 
   // Load from localStorage
   useEffect(() => {
@@ -16,13 +18,9 @@ export default function Home() {
       if (savedBooks) {
         setBooks(JSON.parse(savedBooks));
       } else {
-        setBooks([
-          { title: "Atomic Habits", likes: 0 },
-          { title: "The Pragmatic Programmer", likes: 0 },
-          { title: "Clean Code", likes: 0 },
-        ]);
+        setBooks([]);
       }
-      setTimeout(() => setLoading(false), 1200);
+      setTimeout(() => setLoading(false), 800);
     }
   }, []);
 
@@ -35,30 +33,48 @@ export default function Home() {
 
   // --- functions ---
   const addBook = () => {
-    if (newBook.trim() === "") return;
-    setBooks([...books, { title: newBook, likes: 0 }]);
+    if (newBook.trim() === "" || newCategory.trim() === "") return;
+    setBooks([
+      ...books,
+      { 
+        id: crypto.randomUUID(), // unique id
+        title: newBook, 
+        category: newCategory || "Uncategorized",
+        likes: 0 }, 
+    ]);
     setNewBook("");
+    setNewCategory("");
   };
 
-  const increaseLikes = (index) => {
-    const updated = [...books];
-    updated[index].likes += 1;
-    setBooks(updated);
+  const likeBook = (id) => {
+    setBooks((prev) =>
+      prev.map((book) =>
+        book.id === id ? { ...book, likes: !book.likes, likes: book.likes ? book.likes - 1 : book.likes + 1 } : book
+      )
+    );
   };
 
-  const deleteBook = (index) => {
-    setBooks(books.filter((_, i) => i !== index));
+  const deleteBook = (id) => {
+    setBooks((prev) => prev.filter((book) => book.id !== id));
   };
 
-  const editBook = (index, newTitle) => {
-    const updated = [...books];
-    updated[index].title = newTitle;
-    setBooks(updated);
+  const editBook = (id, newTitle) => {
+    setBooks((prev) =>
+      prev.map((book) =>
+        book.id === id ? { ...book, title: newTitle } : book
+      )
+    );
   };
 
-  const filteredBooks = books.filter((book) =>
-    book.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const resetAll = () => {
+    setBooks([]);
+    localStorage.removeItem("books"); // clears storage
+  };
+
+  const filteredBooks = books
+    .filter((book) => book.title.toLowerCase().includes(search.toLowerCase()))
+    .filter((book) => !categoryFilter || book.category === categoryFilter)
+  ;
 
   const sortedBooks = [...filteredBooks].sort((a, b) => {
     if (sortOrder === "az") return a.title.localeCompare(b.title);
@@ -79,8 +95,15 @@ export default function Home() {
           type="text"
           value={newBook}
           onChange={(e) => setNewBook(e.target.value)}
-          placeholder="Add a book..."
+          placeholder="Book title..."
           className="flex-1 border rounded-lg p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <input
+          type="text"
+          value={newCategory}
+          onChange={(e) => setNewCategory(e.target.value)}
+          placeholder="Category..."
+          className="border rounded-lg p-2 w-32"
         />
         <button
           onClick={addBook}
@@ -92,6 +115,8 @@ export default function Home() {
 
       {/* Search + Sort */}
       <div className="flex gap-2">
+
+        {/* Search */}
         <input
           type="text"
           value={search}
@@ -108,21 +133,47 @@ export default function Home() {
           <option value="za">Z → A</option>
           <option value="likes">Most Liked</option>
         </select>
+
+        {/* Category Filter */}
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="border rounded-lg p-2 shadow-sm"
+        >
+          <option value="">All Categories</option>
+          {Array.from(new Set(books.map((book) => book.category))).map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+
+        {process.env.NODE_ENV === "development" && (
+        <button
+          onClick={resetAll}
+          className="bg-red-500 text-white px-3 py-1 rounded"
+        >
+          Reset All
+        </button>
+      )}
       </div>
 
       {/* List */}
       <ul className="space-y-3">
         {loading ? (
-          [...Array(3)].map((_, i) => <Skeleton key={i} />)
+          [...Array(books.length || 1)].map((_, i) => <Skeleton key={i} />)
+          ) : filteredBooks.length === 0 ? ( // show when no result
+            <p className="text-center text-gray-400">No books found 📭</p>
         ) : (
-          sortedBooks.map((book, index) => (
+          sortedBooks.map((item) => (
             <Titles
-              key={index}
-              title={book.title}
-              likes={book.likes}
-              onLike={() => increaseLikes(index)}
-              onDelete={() => deleteBook(index)}
-              onEdit={(newTitle) => editBook(index, newTitle)}
+              key={item.id}
+              title={item.title}
+              category={item.category}
+              likes={item.likes}
+              onLike={() => likeBook(item.id)}
+              onDelete={() => deleteBook(item.id)}
+              onEdit={(newTitle) => editBook(item.id, newTitle)}
             />
           ))
         )}
