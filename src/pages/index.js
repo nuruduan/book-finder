@@ -1,115 +1,88 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+import { useState } from "react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// BookList component expects a prop called title
+// and renders it inside a list item (<li>)
+// easier to style or extend later (component reusability)
+function BookList({ title }) {
+  return <li>{title}</li>;
+}
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+function Like({ title }) {
+  const [likes, setLikes] = useState(0);
 
-export default function Home() {
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by smiling{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/pages/index.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div>
+      <p>{title}</p>
+      <button onClick={() => setLikes(likes + 1)}>👍Like {likes}</button>
     </div>
+  );
+}
+
+// defines a react component called Home
+export default function Home() {
+  // useState is a hook that let components have state variables(remember values between function calls)
+
+  const [name, setName] = useState(""); // start empty string
+  const [books, setBooks] = useState([
+    "Atomic Habits",
+    "The Pragmatic Programmer",
+    "Clean Code",
+    "Ayam"
+  ]);
+  const [newBook, setNewBook] = useState(""); // for new book input
+
+  const addBook = () => {
+    if (newBook.trim() === "") return; // prevent adding empty book titles
+    setBooks([...books, newBook]); // add new book to books array
+    setNewBook(""); // clear input field
+  };
+
+  return (
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+      <h1>Hello, Book Finder!</h1>
+
+      <input
+        type="text" // input field
+        placeholder="Enter your name" // placeholder text
+        value={name} // is name state variable
+        onChange={(e) => setName(e.target.value)} // update state
+      />
+
+      {/*
+      if name is empty, show "stranger"
+      if name has value, show name
+      */}
+      <p>Welcome, {name || "stranger"} 👋</p> 
+
+        <div>
+          <h1 style={{ padding: "20px" }}>📚 Book Finder (Demo List)</h1>
+
+          {/* New book input */}
+          <input
+            type="text"
+            placeholder="Add a new book"
+            value={newBook}
+            onChange={(e) => setNewBook(e.target.value)}
+          />
+          <button onClick={addBook}>➕ Add Book</button>
+          
+          <ul style={{ padding: "20px" }}>
+            {/*
+            books = state variable (array of book titles)
+            .map = loop through each book in the array, create a <li> for each book
+            key={index} = unique key for each list item (index is the position in the array)
+            */}
+            
+              {books.map((book, index) => (
+                <Like key={index} title={book}/>
+       
+              ))}
+            
+          </ul>
+        </div>
+
+    </div>
+
+    
   );
 }
