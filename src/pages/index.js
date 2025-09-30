@@ -1,20 +1,16 @@
 import { useState } from "react";
 
-// BookList component expects a prop called title
-// and renders it inside a list item (<li>)
-// easier to style or extend later (component reusability)
-function BookList({ title }) {
-  return <li>{title}</li>;
-}
-
-function Like({ title }) {
+function Like({ title, onDelete }) {
   const [likes, setLikes] = useState(0);
 
   return (
-    <div>
-      <p>{title}</p>
-      <button onClick={() => setLikes(likes + 1)}>👍Like {likes}</button>
-    </div>
+    <li style={{ marginBottom: "10px" }}>
+      {title} — 
+      <button onClick={() => setLikes(likes + 1)}>👍 Like {likes}</button>
+      <button onClick={onDelete} style={{ marginLeft: "10px", color: "red" }}>
+        ❌ Delete
+      </button>
+    </li>
   );
 }
 
@@ -24,10 +20,10 @@ export default function Home() {
 
   const [name, setName] = useState(""); // start empty string
   const [books, setBooks] = useState([
-    "Atomic Habits",
-    "The Pragmatic Programmer",
-    "Clean Code",
-    "Ayam"
+    { title: "Atomic Habits", likes: 0 },
+    { title: "The Pragmatic Programmer", likes: 0 },
+    { title: "Clean Code", likes: 0 },
+    { title: "Ayam", likes: 0 }
   ]);
   const [newBook, setNewBook] = useState(""); // for new book input
 
@@ -35,6 +31,11 @@ export default function Home() {
     if (newBook.trim() === "") return; // prevent adding empty book titles
     setBooks([...books, newBook]); // add new book to books array
     setNewBook(""); // clear input field
+  };
+
+  // Delete book by index
+  const deleteBook = (index) => {
+    setBooks(books.filter((_, i) => i !== index));
   };
 
   return (
@@ -74,13 +75,12 @@ export default function Home() {
             */}
             
               {books.map((book, index) => (
-                <Like key={index} title={book}/>
+                <Like key={index} title={book.title} likes={book.likes} onDelete={() => deleteBook(index)} /> // pass title and onDelete function as props
        
               ))}
             
           </ul>
         </div>
-
     </div>
 
     
