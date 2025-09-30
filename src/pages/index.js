@@ -16,7 +16,7 @@ export default function Home() {
       if (savedBooks) {
         setBooks(JSON.parse(savedBooks));
       }
-      setTimeout(() => setLoading(false), 1200);
+      setTimeout(() => setLoading(false), 1200); // simulate loading
     }
   }, []);
 
@@ -94,18 +94,12 @@ export default function Home() {
       </div>
 
       {/* Loading skeleton */}
-      {loading ? (
-        <div className="space-y-2">
-          {Array(4)
-            .fill(0)
-            .map((_, i) => (
-              <Skeleton key={i} />
-            ))}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {sortedBooks.length > 0 ? (
-            sortedBooks.map((book, index) => (
+      <div className="flex flex-col gap-3">
+        {loading
+          ? Array(books.length || 1)
+              .fill(null)
+              .map((_, i) => <Skeleton key={i} />)
+          : sortedBooks.map((book, index) => (
               <Titles
                 key={index}
                 title={book.title}
@@ -113,12 +107,8 @@ export default function Home() {
                 onLike={() => increaseLikes(index)}
                 onDelete={() => deleteBook(index)}
               />
-            ))
-          ) : (
-            <p className="text-gray-500">No books found.</p>
-          )}
-        </div>
-      )}
+            ))}
+      </div>
     </div>
   );
 }
